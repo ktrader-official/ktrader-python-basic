@@ -1,0 +1,8 @@
+{
+    "python": {
+        "identifier": 501,
+        "python_path": "python/python_turtle_strategy.py",
+        "python_strategy": "PythonTurtleStrategy",
+        "config": "strategy_configs/turtle.json"
+    }
+}
