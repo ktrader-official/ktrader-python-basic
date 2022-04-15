@@ -31,20 +31,20 @@ class PythonTurtleStrategy(python_strategy):
         kt_info('summary total_margin {} total_commission {} total_order_commission {}'.format(summary.total_margin, summary.total_commission, summary.total_order_commission))
         kt_info('summary frozen_margin {} frozen_commission {} frozen_order_commission {}'.format(summary.frozen_margin, summary.frozen_commission, summary.frozen_order_commission))
         # account summary
-        account = super().api.get_account_summary()
-        ctp_fees = account.total_commission
-        ctp_pnl = account.position_profit
-        tot_netpnl = account.net_pnl
-        tot_netpnl_high = account.net_pnl_high
-        tot_netpnl_low = account.net_pnl_low
-        kt_info('ctp_account: {}, 持仓盈亏:{}, 手续费:{}, 总利润:{}, 最高:{}, 最低:{}'.format(account.investor_id, ctp_pnl, ctp_fees, tot_netpnl, tot_netpnl_high, tot_netpnl_low))
+        summary = super().api.get_account_summary()
+        ctp_fees = summary.total_commission
+        ctp_pnl = summary.position_profit
+        tot_netpnl = summary.net_pnl
+        tot_netpnl_high = summary.net_pnl_high
+        tot_netpnl_low = summary.net_pnl_low
+        kt_info('ctp_account: {}, 持仓盈亏:{}, 手续费: {}, 总利润:{}, 最高: {}, 最低:{}'.format(summary.investor_id, ctp_pnl, ctp_fees, tot_netpnl, tot_netpnl_high, tot_netpnl_low))
 
         kt_info('parse instrument configs:')
         pos = super().api.get_instrument_position_detail(self.param.symbol)
-        total_long = pos.long_position.total_position
-        history_long = pos.long_position.history_position
-        total_short = -pos.short_position.total_position
-        history_short = -pos.short_position.history_position
+        total_long = pos.long_position.total
+        history_long = pos.long_position.history
+        total_short = -pos.short_position.total
+        history_short = -pos.short_position.history
         init_net_pos = total_long + total_short
         kt_info('合约{} 多仓{} 昨多{} 空仓{} 昨空{}'.format(self.param.symbol, total_long, history_long, total_short, history_short))
         if init_net_pos > 0:
@@ -68,7 +68,7 @@ class PythonTurtleStrategy(python_strategy):
 
     def on_tick(self, t):
         # current tick time
-        tick_time = format_time(int(t.timestamp_milli * 1e6), '')
+        tick_time = format_time(int(t.timestamp), '')
         kt_info('合约:{},时间:{},最新:{},最高:{},最低:{},买一:{},买一量:{},卖一:{},卖一量:{},成交量:{},增仓:{}'.format(
             t.instrument_id, tick_time, t.last_price, t.highest_price, t.lowest_price, t.bid_price[0], t.bid_volume[0], t.ask_price[0], t.ask_volume[0], t.volume_delta, t.open_interest_delta))
 
@@ -76,7 +76,7 @@ class PythonTurtleStrategy(python_strategy):
             return
         cur_last_price = t.last_price
         summary = super().api.get_instrument_summary(self.param.symbol)
-        cur_net_pos = summary.long_position.total_position - summary.short_position.total_position
+        cur_net_pos = summary.net_pos
         if cur_net_pos != 0 and not self.last_open_trade.instrument_id:
             kt_error('{} current net pos {} last open trade not updated'.format(t.instrument_id, cur_net_pos))
             return
