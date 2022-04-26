@@ -6,8 +6,10 @@ from ktrader_python import *
 
 class PythonTurtleStrategy(python_strategy):
     def __init__(self):
+        # 每一个新的策略instance需要继承 python_strategy object
         python_strategy.__init__(self)
-        kt_info('created PythonStrategy {}'.format(self))
+        kt_info('Created Turtle Strategy: {}'.format(self))
+        # Initialization
         self.context = ''
         self.param = None
         self.last_open_trade = trade_info()
@@ -17,66 +19,66 @@ class PythonTurtleStrategy(python_strategy):
         return 'python_turtle'
 
     def update_config(self, cfg_path):
-        kt_info('loading {}'.format(cfg_path))
+        # 加载global_config.json
+        kt_info('Loading strategy global config: {}'.format(cfg_path))
         f = open(cfg_path)
-        params = json.load(f, object_hook=lambda d: SimpleNamespace(**d))
+        params = json.load(f, object_hook=lambda d: SimpleNamespace(**d)) # load json strategy config into object
         self.context = params.context
         self.param = params.params
-        kt_info('updated config {}'.format(self.param))
+        kt_info('Global config updated: {}'.format(self.param))
         return ''
 
     def init(self):
-        kt_info('python strategy {} init'.format(self.context))
+        # init 在每次交易刚开始时会触发, 用于策略初始化
+        kt_info('Strategy Init: {}'.format(self.context))
         current_time = format_time(get_time_now(), '')
-        action_day = datetime.fromtimestamp(get_time_now() / 1e9, pytz.timezone('Asia/Shanghai')).date().strftime('%Y%m%d')
+        action_day = datetime.fromtimestamp(get_time_now() / 1e9, pytz.timezone('Asia/Shanghai')).date().strftime('%Y-%m-%d') # action day 自然日
         kt_info('current day is: {}, trading_day is: {}, time is: {}'.format(action_day, get_trading_day(), current_time))
-        summary = super().api.get_position_summary()
-        kt_info('summary close_profit {} position_profit {}'.format(summary.close_profit, summary.position_profit))
-        kt_info('summary total_margin {} total_commission {} total_order_commission {}'.format(summary.total_margin, summary.total_commission, summary.total_order_commission))
-        kt_info('summary frozen_margin {} frozen_commission {} frozen_order_commission {}'.format(summary.frozen_margin, summary.frozen_commission, summary.frozen_order_commission))
-        # account summary
-        summary = super().api.get_account_summary()
-        ctp_fees = summary.total_commission
-        ctp_pnl = summary.position_profit
-        tot_netpnl = summary.net_pnl
-        tot_netpnl_high = summary.net_pnl_high
-        tot_netpnl_low = summary.net_pnl_low
-        kt_info('ctp_account: {}, 持仓盈亏:{}, 手续费: {}, 总利润:{}, 最高: {}, 最低:{}'.format(summary.investor_id, ctp_pnl, ctp_fees, tot_netpnl, tot_netpnl_high, tot_netpnl_low))
 
-        kt_info('parse instrument configs:')
+        # account summary 显示账户信息
+        summary = super().api.get_account_summary()
+        acc_fees = summary.total_commission
+        acc_profit = summary.position_profit
+        acc_netpnl = summary.net_pnl
+        acc_netpnl_high = summary.net_pnl_high
+        acc_netpnl_low = summary.net_pnl_low
+        kt_info('Account Summary: 用户ID: {}, 持仓盈亏:{}, 手续费: {}, 净利润:{}, 最高净利: {}, 最低净利:{}'.format(summary.investor_id, acc_profit, acc_fees, acc_netpnl, acc_netpnl_high, acc_netpnl_low))
+
+        # position summary 显示本策略所有仓位信息
+        summary = super().api.get_position_summary()
+        kt_info('Position Summary: 平仓盈亏:{}, 持仓盈亏:{}, 总保证金:{}, 总手续费:{}, '.format(summary.close_profit, summary.position_profit, summary.total_margin, summary.total_commission))
+
+        # contract summary 显示单个合约持仓信息
+        kt_info('Contract Summary:')
         pos = super().api.get_instrument_position_detail(self.param.symbol)
-        total_long = pos.long_position.total
-        history_long = pos.long_position.history
-        total_short = -pos.short_position.total
-        history_short = -pos.short_position.history
-        init_net_pos = total_long + total_short
-        kt_info('合约{} 多仓{} 昨多{} 空仓{} 昨空{}'.format(self.param.symbol, total_long, history_long, total_short, history_short))
+        total_long = pos.long_position.total # 多仓(总)
+        history_long = pos.long_position.history # 昨多仓
+        total_short = -pos.short_position.total # 空仓(总)
+        history_short = -pos.short_position.history # 昨空仓
+        init_net_pos = total_long + total_short # 净多仓
+        kt_info('合约:{}, 多仓:{}, 昨多:{}, 空仓:{}, 昨空:{}, 净多仓:{}'.format(self.param.symbol, total_long, history_long, total_short, history_short, init_net_pos))
+
+        # 找到最近一次开仓交易
         if init_net_pos > 0:
             for trade in pos.long_position_detail:
-                self.last_open_trade = trade
+                self.last_open_trade = trade 
         elif init_net_pos < 0:
             for trade in pos.short_position_detail:
                 self.last_open_trade = trade
-        # test APIs
-        super().api.get_all_position_summary()
-        super().api.get_all_position_detail()
-        super().api.get_inflight_orders()
-        super().api.get_last_k_ticks(self.param.symbol, 60)
-        super().api.get_last_k_bars(self.param.symbol, 60, 1)
-        super().api.get_instrument_trading_risk(self.param.symbol)
         return
 
     def shutdown(self):
-        kt_info('python strategy {} shutdown'.format(self.context))
+        # 安全退出策略
+        kt_info('Strategy {} shutdown'.format(self.context))
         return
 
     def on_tick(self, t):
-        # current tick time
+        # 对每一个新Tick事件，做出相应交易动作
         tick_time = format_time(int(t.timestamp), '')
         kt_info('合约:{},时间:{},最新:{},最高:{},最低:{},买一:{},买一量:{},卖一:{},卖一量:{},成交量:{},增仓:{}'.format(
             t.instrument_id, tick_time, t.last_price, t.highest_price, t.lowest_price, t.bid_price[0], t.bid_volume[0], t.ask_price[0], t.ask_volume[0], t.volume_delta, t.open_interest_delta))
 
-        if self.param.symbol != t.instrument_id:
+        if self.param.symbol != t.instrument_id: # 检查symbol
             return
         cur_last_price = t.last_price
         summary = super().api.get_instrument_summary(self.param.symbol)
@@ -135,6 +137,7 @@ class PythonTurtleStrategy(python_strategy):
         super().api.set_target_position(self.target_open, False)
 
     def on_order_update(self, update):
+        # 对于每一个订单更新或成交事件做处理
         if update.has_trade:
             kt_info('trade update: {}'.format(serialize(update.trade)))
             if update.trade.offset == offset_flag_enum.open:
