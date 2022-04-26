@@ -8,6 +8,10 @@ class PythonTurtleStrategy(python_strategy):
     def __init__(self):
         python_strategy.__init__(self)
         kt_info('created PythonStrategy {}'.format(self))
+        self.context = ''
+        self.param = None
+        self.last_open_trade = trade_info()
+        self.target_open = position_target()
 
     def name(self):
         return 'python_turtle'
@@ -136,9 +140,3 @@ class PythonTurtleStrategy(python_strategy):
             if update.trade.offset == offset_flag_enum.open:
                 self.last_open_trade = update.trade
         kt_info('order update: {}'.format(serialize(update.order)))
-
-
-    context = ''
-    param = None
-    last_open_trade = trade_info()
-    target_open = position_target()
