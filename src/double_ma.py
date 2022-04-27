@@ -3,8 +3,11 @@ import pytz
 from datetime import datetime
 from types import SimpleNamespace
 from ktrader_python import *
+import pandas as pd
+import numpy as np
 
-class PythonTurtleStrategy(python_strategy):
+class DoubleMA(python_strategy):
+    # DoubleMA 是最简模板策略，即是经常见到的双均线策略。
     def __init__(self):
         # 每一个新的策略instance需要继承 python_strategy object
         python_strategy.__init__(self)
@@ -12,8 +15,7 @@ class PythonTurtleStrategy(python_strategy):
         # Initialization
         self.context = ''
         self.param = None
-        self.last_open_trade = trade_info()
-        self.target_open = position_target()
+        self.target_open = position_target() # 初始化调仓object
 
     def update_config(self, cfg_path):
         # 加载global_config.json
@@ -30,10 +32,8 @@ class PythonTurtleStrategy(python_strategy):
         kt_info('Strategy Init: {}'.format(self.context))
         current_time = format_time(get_time_now(), '')
         action_day = datetime.fromtimestamp(get_time_now() / 1e9, pytz.timezone('Asia/Shanghai')).date().strftime('%Y-%m-%d') # action day 自然日
-        kt_info('current day is: {}, trading_day is: {}, time is: {}'.format(action_day, get_trading_day(), current_time))
-        # 订阅合约
-        self.api.subscribe_instrument(self.param.symbol)
-        
+        kt_info('current day is: {}, trading_day is: {}, time is: {}'.format(action_day, get_trading_day(), current_time)) #显示时间信息
+
         # account summary 显示账户信息
         summary = self.api.get_account_summary()
         acc_fees = summary.total_commission
@@ -57,13 +57,6 @@ class PythonTurtleStrategy(python_strategy):
         init_net_pos = total_long + total_short # 净多仓
         kt_info('合约:{}, 多仓:{}, 昨多:{}, 空仓:{}, 昨空:{}, 净多仓:{}'.format(self.param.symbol, total_long, history_long, total_short, history_short, init_net_pos))
 
-        # 找到最近一次开仓交易
-        if init_net_pos > 0:
-            for trade in pos.long_position_detail:
-                self.last_open_trade = trade
-        elif init_net_pos < 0:
-            for trade in pos.short_position_detail:
-                self.last_open_trade = trade
         return
 
     def shutdown(self):
@@ -82,67 +75,40 @@ class PythonTurtleStrategy(python_strategy):
 
         if self.param.symbol != t.instrument_id: # 检查symbol
             return
-        cur_last_price = t.last_price
+        cur_price = t.last_price
         summary = self.api.get_instrument_summary(self.param.symbol)
         cur_net_pos = summary.net_pos
-        if cur_net_pos != 0 and not self.last_open_trade.instrument_id:
-            kt_error('{} current net pos {} last open trade not updated'.format(t.instrument_id, cur_net_pos))
-            return
+
+        # get moving averages
+        bars = self.api.get_last_k_bars(self.param.symbol, 25, 5) # bars[0]: 离当前最近的bar
+        close_prices = [bar.close_price for bar in bars]
+        slow_ma = np.mean(close_prices)
+        fast_ma = np.mean(close_prices[-5:])
+        kt_info('fast_ma: {}, slow_ma:{}'.format(fast_ma, slow_ma))
 
         # 开仓条件
         if cur_net_pos == 0:
-            # BUY
-            if cur_last_price > self.param.HHigh:
+            # 买入开仓条件
+            if cur_price > fast_ma and fast_ma > slow_ma: 
                 # 设定position_target object: symbol, algo type, target_pos, desired price
                 self.target_open.instrument_id = self.param.symbol
                 self.target_open.algorithm = target_position_algorithm.basic
                 self.target_open.target_pos = 1
-                self.target_open.desired_price = cur_last_price
-            # SELL
-            elif cur_last_price < self.param.LLow:
+                self.target_open.desired_price = cur_price
+            # 卖出开仓条件
+            elif cur_price < fast_ma and  fast_ma < slow_ma:
                 self.target_open.instrument_id = self.param.symbol
                 self.target_open.algorithm = target_position_algorithm.basic
                 self.target_open.target_pos = -1
-                self.target_open.desired_price = cur_last_price
-        # 止损、止盈条件
-        elif cur_net_pos >= 1:
-            assert self.last_open_trade.instrument_id
-            stoploss = max(self.last_open_trade.price - 0.5*self.param.ATR, self.param.LLow)
-            # 平仓止损
-            if cur_last_price < stoploss:
-                self.target_open.instrument_id = self.param.symbol
-                self.target_open.algorithm = target_position_algorithm.basic
-                self.target_open.target_pos = cur_net_pos - 1
-                self.target_open.desired_price = cur_last_price
-            # 动态加仓
-            if cur_last_price > self.last_open_trade.price + 0.5*self.param.ATR:
-                self.target_open.instrument_id = self.param.symbol
-                self.target_open.algorithm = target_position_algorithm.basic
-                self.target_open.target_pos = cur_net_pos + 1
-                self.target_open.desired_price = cur_last_price
-        elif cur_net_pos <= -1:
-            assert self.last_open_trade.instrument_id
-            stoploss = min(self.last_open_trade.price + 0.5*self.param.ATR, self.param.HHigh)
-            # 平仓止损
-            if cur_last_price > stoploss:
-                self.target_open.instrument_id = self.param.symbol
-                self.target_open.algorithm = target_position_algorithm.basic
-                self.target_open.target_pos = cur_net_pos + 1
-                self.target_open.desired_price = cur_last_price
-            # 动态加仓
-            if cur_last_price < self.last_open_trade.price - 0.5*self.param.ATR:
-                self.target_open.instrument_id = self.param.symbol
-                self.target_open.algorithm = target_position_algorithm.basic
-                self.target_open.target_pos = cur_net_pos - 1
-                self.target_open.desired_price = cur_last_price
+                self.target_open.desired_price = cur_price
+
         if not self.target_open.instrument_id:
             return
-        self.api.set_target_position(self.target_open, False) # 启动调仓任务
+        self.api.set_target_position(self.target_open, False) # set target position 进行调仓 
 
     def on_order_update(self, update):
         # 对于每一个订单更新或成交事件进行处理
         if update.has_trade:
             kt_info('trade update: {}'.format(serialize(update.trade)))
-            if update.trade.offset == offset_flag_enum.open:
-                self.last_open_trade = update.trade
-        kt_info('order update: {}'.format(serialize(update.order)))
+        else:
+            kt_info('order update: {}'.format(serialize(update.order)))

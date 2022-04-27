@@ -1,8 +1,8 @@
 {
     "python": {
         "identifier": 101,
-        "python_path": "src/python_turtle_strategy.py",
-        "python_strategy": "PythonTurtleStrategy",
-        "config": "strategy_configs/turtle.json"
+        "python_path": "src/grid_trading.py",
+        "python_strategy": "GridTrading",
+        "config": "strategy_configs/grid_trading.json"
     }
 }
