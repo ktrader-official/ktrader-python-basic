@@ -15,9 +15,6 @@ class PythonTurtleStrategy(python_strategy):
         self.last_open_trade = trade_info()
         self.target_open = position_target()
 
-    def name(self):
-        return 'python_turtle'
-
     def update_config(self, cfg_path):
         # 加载global_config.json
         kt_info('Loading strategy global config: {}'.format(cfg_path))
@@ -36,7 +33,7 @@ class PythonTurtleStrategy(python_strategy):
         kt_info('current day is: {}, trading_day is: {}, time is: {}'.format(action_day, get_trading_day(), current_time))
 
         # account summary 显示账户信息
-        summary = super().api.get_account_summary()
+        summary = self.api.get_account_summary()
         acc_fees = summary.total_commission
         acc_profit = summary.position_profit
         acc_netpnl = summary.net_pnl
@@ -45,12 +42,12 @@ class PythonTurtleStrategy(python_strategy):
         kt_info('Account Summary: 用户ID: {}, 持仓盈亏:{}, 手续费: {}, 净利润:{}, 最高净利: {}, 最低净利:{}'.format(summary.investor_id, acc_profit, acc_fees, acc_netpnl, acc_netpnl_high, acc_netpnl_low))
 
         # position summary 显示本策略所有仓位信息
-        summary = super().api.get_position_summary()
+        summary = self.api.get_position_summary()
         kt_info('Position Summary: 平仓盈亏:{}, 持仓盈亏:{}, 总保证金:{}, 总手续费:{}, '.format(summary.close_profit, summary.position_profit, summary.total_margin, summary.total_commission))
 
         # contract summary 显示单个合约持仓信息
         kt_info('Contract Summary:')
-        pos = super().api.get_instrument_position_detail(self.param.symbol)
+        pos = self.api.get_instrument_position_detail(self.param.symbol)
         total_long = pos.long_position.total # 多仓(总)
         history_long = pos.long_position.history # 昨多仓
         total_short = -pos.short_position.total # 空仓(总)
@@ -61,7 +58,7 @@ class PythonTurtleStrategy(python_strategy):
         # 找到最近一次开仓交易
         if init_net_pos > 0:
             for trade in pos.long_position_detail:
-                self.last_open_trade = trade 
+                self.last_open_trade = trade
         elif init_net_pos < 0:
             for trade in pos.short_position_detail:
                 self.last_open_trade = trade
@@ -81,7 +78,7 @@ class PythonTurtleStrategy(python_strategy):
         if self.param.symbol != t.instrument_id: # 检查symbol
             return
         cur_last_price = t.last_price
-        summary = super().api.get_instrument_summary(self.param.symbol)
+        summary = self.api.get_instrument_summary(self.param.symbol)
         cur_net_pos = summary.net_pos
         if cur_net_pos != 0 and not self.last_open_trade.instrument_id:
             kt_error('{} current net pos {} last open trade not updated'.format(t.instrument_id, cur_net_pos))
@@ -134,7 +131,7 @@ class PythonTurtleStrategy(python_strategy):
                 self.target_open.desired_price = cur_last_price
         if not self.target_open.instrument_id:
             return
-        super().api.set_target_position(self.target_open, False)
+        self.api.set_target_position(self.target_open, False)
 
     def on_order_update(self, update):
         # 对于每一个订单更新或成交事件做处理
