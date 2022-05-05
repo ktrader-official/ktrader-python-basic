@@ -1,8 +1,8 @@
 {
     "python": {
         "identifier": 101,
-        "python_path": "src/grid_trading.py",
-        "python_strategy": "GridTrading",
-        "config": "strategy_configs/grid_trading.json"
+        "python_path": "src/build_pos.py",
+        "python_strategy": "BuildPos",
+        "config": "strategy_configs/build_pos.json"
     }
 }
