@@ -16,6 +16,7 @@ class BuildPos(python_strategy):
         self.context = ''
         self.param = None
         self.target_open = position_target() # 初始化调仓object
+        self.desired_pos = 0 # dataframe
 
     def update_config(self, cfg_path):
         # 加载global_config.json
@@ -57,6 +58,16 @@ class BuildPos(python_strategy):
         init_net_pos = total_long + total_short # 净多仓
         kt_info('合约:{}, 多仓:{}, 昨多:{}, 空仓:{}, 昨空:{}, 净多仓:{}'.format(self.param.symbol, total_long, history_long, total_short, history_short, init_net_pos))
 
+        # get signal df
+        kt_info("signal filepath: {} ".format(self.param.signal_filepath))
+        df_signal = pd.read_csv(self.param.signal_filepath, index_col=0)
+
+        if action_day in df_signal.index:
+            self.desired_pos = int(df_signal.loc[action_day][0])
+            kt_info("update target pos from signal file: {}".format(self.desired_pos))
+        else:
+            self.desired_pos = self.param.target_pos # 如果signal.csv没有相应的目标仓位，则用strategy config提供的目标仓位
+        kt_info("test pos: {}".format(self.desired_pos)) # test error finding
         return
 
     def shutdown(self):
@@ -83,7 +94,7 @@ class BuildPos(python_strategy):
         if t.timestamp > build_start and t.timestamp < build_end:
             self.target_open.instrument_id = self.param.symbol
             self.target_open.algorithm = target_position_algorithm.basic
-            self.target_open.target_pos = self.param.target_pos
+            self.target_open.target_pos = self.desired_pos
             self.target_open.desired_price = t.last_price
             self.api.set_target_position(self.target_open, False) # set target position 进行调仓
 
