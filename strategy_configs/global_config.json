@@ -1,8 +1,8 @@
 {
     "python": {
         "identifier": 101,
-        "python_path": "src/build_pos.py",
-        "python_strategy": "BuildPos",
-        "config": "strategy_configs/build_pos.json"
+        "python_path": "src/hold_overnight.py",
+        "python_strategy": "HoldOvernight",
+        "config": "strategy_configs/hold_overnight.json"
     }
 }

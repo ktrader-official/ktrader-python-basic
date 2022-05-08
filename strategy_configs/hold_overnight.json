@@ -1,0 +1,12 @@
+{
+    "context":"HoldOvernight",
+    "params": {
+                  "symbol":"i2205",
+                  "target_pos":10,
+                  "signal_filepath":"metadata/signal.csv",
+                  "build_start": "14:30:00",
+                  "build_end" : "14:35:00",
+                  "reduce_start": "09:30:00",
+                  "reduce_end": "09:35:00"
+                }
+}
