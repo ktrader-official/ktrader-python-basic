@@ -79,15 +79,15 @@ class GridTrading(python_strategy):
 
         # get moving averages
         bars = self.api.get_last_k_bars(self.param.symbol, 15, 1) # bars[0]: 离当前最近的bar
-        close_prices = [bar.close_price for bar in bars]
+        close_prices = [bar.close for bar in bars]
 
         # set an origin price of the grid
         print(len(close_prices))
-        if len(close_prices)== 10 and not self.snap:
+        if len(close_prices) == 10 and not self.snap:
             self.snap_price = np.mean(close_prices)
             kt_info("snap price: {}".format(self.snap_price))
             self.snap = True
-        
+
         if self.snap and not np.isnan(self.snap_price):
             ## show the grid
             # grid_list = []
@@ -105,11 +105,11 @@ class GridTrading(python_strategy):
             self.target_open.desired_price = cur_price
 
             kt_info('合约:{},时间:{},净利润:{},净持仓:{},理论持仓:{},最新:{},最高:{},最低:{},买一:{},买一量:{},卖一:{},卖一量:{},成交量:{},增仓:{}'.format(
-            t.instrument_id, tick_time, acc_summary.net_pnl, pos_summary.net_pos, desired_pos, t.last_price, t.highest_price, t.lowest_price, t.bid_price[0], t.bid_volume[0], t.ask_price[0], t.ask_volume[0], t.volume_delta, t.open_interest_delta))
+                t.instrument_id, tick_time, acc_summary.net_pnl, pos_summary.net_pos, desired_pos, t.last_price, t.highest_price, t.lowest_price, t.bid_price[0], t.bid_volume[0], t.ask_price[0], t.ask_volume[0], t.volume_delta, t.open_interest_delta))
 
             if not self.target_open.instrument_id:
                 return
-            self.api.set_target_position(self.target_open, False) # set target position 进行调仓 
+            self.api.set_target_position(self.target_open, False) # set target position 进行调仓
 
     def on_order_update(self, update):
         # 对于每一个订单更新或成交事件进行处理

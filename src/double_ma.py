@@ -81,7 +81,7 @@ class DoubleMA(python_strategy):
 
         # get moving averages
         bars = self.api.get_last_k_bars(self.param.symbol, 25, 5) # bars[0]: 离当前最近的bar
-        close_prices = [bar.close_price for bar in bars]
+        close_prices = [bar.close for bar in bars]
         slow_ma = np.mean(close_prices)
         fast_ma = np.mean(close_prices[-5:])
         kt_info('fast_ma: {}, slow_ma:{}'.format(fast_ma, slow_ma))
@@ -89,7 +89,7 @@ class DoubleMA(python_strategy):
         # 开仓条件
         if cur_net_pos == 0:
             # 买入开仓条件
-            if cur_price > fast_ma and fast_ma > slow_ma: 
+            if cur_price > fast_ma and fast_ma > slow_ma:
                 # 设定position_target object: symbol, algo type, target_pos, desired price
                 self.target_open.instrument_id = self.param.symbol
                 self.target_open.algorithm = target_position_algorithm.basic
@@ -104,7 +104,7 @@ class DoubleMA(python_strategy):
 
         if not self.target_open.instrument_id:
             return
-        self.api.set_target_position(self.target_open, False) # set target position 进行调仓 
+        self.api.set_target_position(self.target_open, False) # set target position 进行调仓
 
     def on_order_update(self, update):
         # 对于每一个订单更新或成交事件进行处理

@@ -81,7 +81,7 @@ class HoldOvernight(python_strategy):
         local_time = int(get_time_now())
         cur_td = get_trading_day()
         next_td = next_trading_day(cur_td)
-        
+
         print("build start: ", self.param.build_start)
         print("build end: ", self.param.build_end)
         # action_day = get_action_day()

@@ -33,7 +33,7 @@ class PythonTurtleStrategy(python_strategy):
         kt_info('current day is: {}, trading_day is: {}, time is: {}'.format(action_day, get_trading_day(), current_time))
         # 订阅合约
         self.api.subscribe_instrument(self.param.symbol)
-        
+
         # account summary 显示账户信息
         summary = self.api.get_account_summary()
         acc_fees = summary.total_commission

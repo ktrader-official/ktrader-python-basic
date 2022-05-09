@@ -1,5 +1,5 @@
 {
-    "python": {
+    "hold_overnight": {
         "identifier": 101,
         "python_path": "src/hold_overnight.py",
         "python_strategy": "HoldOvernight",
