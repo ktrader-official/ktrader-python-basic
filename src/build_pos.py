@@ -67,7 +67,7 @@ class BuildPos(python_strategy):
             kt_info("update target pos from signal file: {}".format(self.desired_pos))
         else:
             self.desired_pos = self.param.target_pos # 如果signal.csv没有相应的目标仓位，则用strategy config提供的目标仓位
-        kt_info("test pos: {}".format(self.desired_pos)) # test error finding
+        kt_info("desired pos: {}".format(self.desired_pos)) # test error finding
         return
 
     def shutdown(self):
@@ -91,18 +91,20 @@ class BuildPos(python_strategy):
         reduce_end = parse_time(cur_date, self.param.reduce_end)
         print("transform time to int: ", build_start, build_end, reduce_start, reduce_end)
 
+        mid_price = (t.bid_price[0] + t.ask_price[0])*0.5
+
         if t.timestamp > build_start and t.timestamp < build_end:
             self.target_open.instrument_id = self.param.symbol
             self.target_open.algorithm = target_position_algorithm.basic
             self.target_open.target_pos = self.desired_pos
-            self.target_open.desired_price = t.last_price
+            self.target_open.desired_price = mid_price
             self.api.set_target_position(self.target_open, False) # set target position 进行调仓
 
         if t.timestamp > reduce_start and t.timestamp < reduce_end:
             self.target_open.instrument_id = self.param.symbol
             self.target_open.algorithm = target_position_algorithm.basic
             self.target_open.target_pos = 0
-            self.target_open.desired_price = t.last_price
+            self.target_open.desired_price = mid_price
             self.api.set_target_position(self.target_open, False) # set target position 进行调仓
 
         # get current netpnl
@@ -112,8 +114,8 @@ class BuildPos(python_strategy):
         pos_summary = self.api.get_instrument_summary(self.param.symbol)
         netpos = pos_summary.net_pos
 
-        kt_info('合约:{},时间:{},净利润:{},净仓位:{},最新:{},最高:{},最低:{},买一:{},买一量:{},卖一:{},卖一量:{},成交量:{},增仓:{}'.format(
-            t.instrument_id, tick_time, netpnl, netpos, t.last_price, t.highest_price, t.lowest_price, t.bid_price[0], t.bid_volume[0], t.ask_price[0], t.ask_volume[0], t.volume_delta, t.open_interest_delta))
+        kt_info('合约:{},时间:{},净利润:{},净仓位:{},最新:{},MD:{},最高:{},最低:{},买一:{},买一量:{},卖一:{},卖一量:{},成交量:{},增仓:{}'.format(
+            t.instrument_id, tick_time, netpnl, netpos, t.last_price, mid_price, t.highest_price, t.lowest_price, t.bid_price[0], t.bid_volume[0], t.ask_price[0], t.ask_volume[0], t.volume_delta, t.open_interest_delta))
 
         if self.param.symbol != t.instrument_id: # 检查symbol
             return
