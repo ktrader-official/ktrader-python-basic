@@ -1,3 +1,3 @@
 [submodule "third_party/ktrader-python-backtest"]
 	path = third_party/ktrader-python-backtest
-	url = git@gitee.com:ktrader-user/ktrader-python-backtest.git
+	url = git@github.com:ktrader-official/ktrader-python-backtest.git
