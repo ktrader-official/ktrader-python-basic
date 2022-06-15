@@ -1,7 +1,7 @@
 {
     "context":"DoubleMA",
     "params": {
-                  "symbol":"i2205",
+                  "symbol":"rb2210",
                   "start_time": "21:01:00",
                   "end_time" : "15:00:00"
                 }
