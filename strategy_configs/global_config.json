@@ -1,8 +1,8 @@
 {
     "build_pos": {
         "identifier": 101,
-        "python_path": "src/build_pos.py",
-        "python_strategy": "BuildPos",
-        "config": "strategy_configs/build_pos.json"
+        "python_path": "src/hello_world.py",
+        "python_strategy": "HelloWorld",
+        "config": "strategy_configs/hello_world.json"
     }
 }

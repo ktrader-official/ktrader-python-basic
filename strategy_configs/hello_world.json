@@ -1,9 +1,8 @@
 {
-    "context":"BuildPos",
+    "context":"HelloWorld",
     "params": {
-                  "symbol":"i2209",
-                  "target_pos":0,
-                  "signal_filepath":"metadata/i2209_signal.csv",
+                  "symbol":"rb2210",
+                  "target_pos":10,
                   "build_start": "21:02:00",
                   "build_end" : "21:05:00",
                   "reduce_start": "14:58:00",
