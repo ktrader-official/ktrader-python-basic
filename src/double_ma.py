@@ -83,7 +83,7 @@ class DoubleMA(python_strategy):
                 self.target_open.desired_price = t.last_price
                 
             # 卖出开仓条件
-            elif t.last_price < fast_ma and  fast_ma < slow_ma:
+            elif t.last_price < fast_ma and fast_ma < slow_ma:
                 # 设置调仓目标：默认用基本(basic)算法，目标仓位为-1(空1手），理想价格为最新价(t.last_price)
                 self.target_open.instrument_id = self.param.symbol
                 self.target_open.algorithm = target_position_algorithm.basic
