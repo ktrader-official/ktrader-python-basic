@@ -4,6 +4,9 @@
 *.app
 *.pyc
 
+# Logins
+ktrader_configs.json
+
 # Strategy Binary
 log
 prodticks*

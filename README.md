@@ -97,6 +97,18 @@ KTrader运行环境为Ubuntu 20.04LTS, 暂不支持直接在Windows或MacOS上�
 	--start_date=20220106 --end_date=20220228 --log_root=log --test_name=mytest
     ```
     回测参数`start_date`和`end_date`是回测开始与截止日期，`tick_path`为行情数据所在路径，需包含从开始到截至每一天的数据，`enabled_strategy`为`global_config.json`所在目录，`log_root`为运行日志所在路径。
+ * 在`ktrader-python-basic`所在路径下`ktrader_config.json`文件配置KTrader账户信息
+
+    > **ktrader_config.json**
+    > ```json
+    > {
+    >     "license":"BASIC",
+    >     "email": "user-email@test.com",
+    >     "password": "user-password"
+    > }
+    > ```
+
+    `license`填写用户使用的KTrader版本，如`BASIC`, `SOLO`, `PRO`等。`email`和`password`填写用户在`https://ktrader-official.com`注册的邮箱和密码即可。
  * 回测结果存储在格式如`log/run_backtest/mytest-20220209-20220209-123456`的目录，其中最后一级格式为`$test_name-$start_date-$end_date-$process_id`，例如
 	```
     log/run_backtest/mytest-20220106-20220228-738719/
