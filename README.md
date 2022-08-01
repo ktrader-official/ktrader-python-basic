@@ -5,6 +5,8 @@
 KTrader Python Basic是基础版本的KTrader Python Trading API. (仅含策略回测功能，供量化投研使用)
 用户可以根据KTrader Python API 开发手册编写量化策略。
 
+**注意**: 最新文档请登录[易量科技KTrader官网](https://ktrader-official.com)查询。
+
 ## 配置项目
 
 1. 下载KTrader Python示例策略`git clone git@gitee.com:ktrader-user/ktrader-python-basic.git`
