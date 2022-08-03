@@ -3,7 +3,7 @@
 ## 介绍
 
 KTrader Python Basic是基础版本的KTrader Python Trading API. (仅含策略回测功能，供量化投研使用)
-用户可以根据KTrader Python API 开发手册编写量化策略。
+用户可以根据KTrader Python API 开发手册编写量化策略。目前针对中国期货市场。
 
 **注意**: 最新文档请登录[易量科技KTrader官网](https://ktrader-official.com)查询。
 
@@ -99,9 +99,9 @@ KTrader运行环境为Ubuntu 20.04LTS, 暂不支持直接在Windows或MacOS上�
 	--start_date=20220106 --end_date=20220228 --log_root=log --test_name=mytest
     ```
     回测参数`start_date`和`end_date`是回测开始与截止日期，`tick_path`为行情数据所在路径，需包含从开始到截至每一天的数据，`enabled_strategy`为`global_config.json`所在目录，`log_root`为运行日志所在路径。
- * 在`ktrader-python-basic`所在路径下`ktrader_config.json`文件配置KTrader账户信息
+ * 在`ktrader-python-basic`所在路径下`ktrader_license.json`文件配置KTrader账户信息
 
-    > **ktrader_config.json**
+    > **ktrader_license.json**
     > ```json
     > {
     >     "license":"BASIC",
@@ -114,7 +114,7 @@ KTrader运行环境为Ubuntu 20.04LTS, 暂不支持直接在Windows或MacOS上�
  * 回测结果存储在格式如`log/run_backtest/mytest-20220209-20220209-123456`的目录，其中最后一级格式为`$test_name-$start_date-$end_date-$process_id`，例如
 	```
     log/run_backtest/mytest-20220106-20220228-738719/
-    ├── backtest 
+    ├── backtest
     ├── logs
     ├── orders
     ├── positions
