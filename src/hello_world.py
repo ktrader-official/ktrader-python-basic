@@ -21,7 +21,7 @@ class HelloWorld(python_strategy):
         self.target_open = position_target() # 初始化目标仓位
 
     def update_config(self, cfg_path):
-        # 加载 global_config.json 和 策略参数文件 double_ma.json  
+        # 加载 global_config.json 和 策略参数文件 double_ma.json
         kt_info('Loading strategy global config: {}'.format(cfg_path))
         f = open(cfg_path)
         # 加载策略参数文件 double_ma.json
@@ -34,8 +34,11 @@ class HelloWorld(python_strategy):
     def init(self):
         # init 在每个交易日之前（回测）或策略启动时（实盘）触发, 用于策略初始化
         kt_info('Strategy Init: {}'.format(self.context))
-        # 订阅合约 
+        # 订阅合约
         self.api.subscribe_instrument(self.param.symbol)
+        # 订阅K线数据
+        self.api.subscribe_bars(self.param.symbol, 3)
+        self.api.subscribe_bars(self.param.symbol, 4)
         current_time = format_time(get_time_now(), '')
         current_day = datetime.fromtimestamp(get_time_now() / 1e9, pytz.timezone('Asia/Shanghai')).date().strftime('%Y-%m-%d') # 获得当前日（自然日)
         kt_info('current day is: {}, trading_day is: {}, time is: {}'.format(current_day, get_trading_day(), current_time)) #显示时间信息
@@ -65,15 +68,13 @@ class HelloWorld(python_strategy):
         reduce_start = parse_time(cur_date, self.param.reduce_start)
         reduce_end = parse_time(cur_date, self.param.reduce_end)
 
-        # 打印出新来的tick 
+        # 打印出新来的tick
         kt_info('合约:{},时间:{},净利润:{},手续费:{},最新:{},最高:{},最低:{},买一:{},买一量:{},卖一:{},卖一量:{},成交量:{},增仓:{}'.format(
             t.instrument_id, tick_time, acc.net_pnl, round(acc.total_commission,2), t.last_price, t.highest_price, t.lowest_price, t.bid_price[0], t.bid_volume[0], t.ask_price[0], t.ask_volume[0], t.volume_delta, t.open_interest_delta))
-            
+
         if self.param.symbol != t.instrument_id: # 检查合约名称是否是当前策略给定的
             return
-        
 
-        
         # 在给定时间建仓
         if t.timestamp > build_start and t.timestamp < build_end:
             self.target_open.instrument_id = self.param.symbol
@@ -87,10 +88,17 @@ class HelloWorld(python_strategy):
             self.target_open.algorithm = target_position_algorithm.basic
             self.target_open.target_pos = 0
             self.target_open.desired_price = t.last_price
-        
+
         # 需要检查self.target_open.instrument_id是否为空，instrument_id有值时，启动调仓函数
         if self.target_open.instrument_id:
             self.api.set_target_position(self.target_open, False) # 启动调仓函数
+
+    def on_bar(self, b):
+        kt_info('K线数据: {},{}'.format(b.instrument_id, serialize(b)))
+        kt_info('last k bars:')
+        bars = self.api.get_last_k_bars(b.instrument_id, 10, 6)
+        for idx, bar in enumerate(bars):
+            kt_info('{}:\tgot bar {},{}'.format(idx, bar.instrument_id, serialize(bar)))
 
     def on_order_update(self, update):
         # 对于每一个订单更新或成交事件进行处理
